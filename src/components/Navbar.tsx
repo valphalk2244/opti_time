@@ -20,6 +20,7 @@ export default function Navbar() {
                 <Link href="/dashboard">Dashboard</Link>
                 <Link href="/login">Login</Link>
                 <Link href="/register">Register</Link>
+                <Link href="/calendar">Calendar</Link>
             </div>
         </nav>
     )

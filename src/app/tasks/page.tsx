@@ -1,22 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { generateSchedule } from "@/lib/scheduler"
 
 type Task = {
   id: string
   title: string
-  difficulty: string
+  difficulty: "low" | "medium" | "high"
   estimated_duration: number
 }
 
 export default function TasksPage() {
 
+  const [tasks, setTasks] = useState<Task[]>([])
   const [title, setTitle] = useState("")
   const [difficulty, setDifficulty] = useState("medium")
   const [duration, setDuration] = useState(60)
-
-  const [tasks, setTasks] = useState<Task[]>([])
 
   const loadTasks = async () => {
 
@@ -31,7 +31,6 @@ export default function TasksPage() {
       .eq("user_id", user.id)
 
     setTasks(data || [])
-
   }
 
   const addTask = async () => {
@@ -39,10 +38,7 @@ export default function TasksPage() {
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
 
-    if (!user) {
-      alert("Please login first")
-      return
-    }
+    if (!user) return
 
     await supabase.from("tasks").insert({
       user_id: user.id,
@@ -53,7 +49,45 @@ export default function TasksPage() {
 
     setTitle("")
     loadTasks()
+  }
 
+  const generateScheduleHandler = async () => {
+
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+
+    if (!user) return
+
+    const schedules = generateSchedule(tasks)
+
+    for (const s of schedules) {
+
+      await supabase.from("schedules").insert({
+        user_id: user.id,
+        task_id: s.task_id,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        type: s.type
+      })
+
+    }
+
+    alert("Schedule generated!")
+  }
+
+  const clearSchedule = async () => {
+
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+
+    if (!user) return
+
+    await supabase
+      .from("schedules")
+      .delete()
+      .eq("user_id", user.id)
+
+    alert("Schedules cleared")
   }
 
   useEffect(() => {
@@ -61,6 +95,7 @@ export default function TasksPage() {
   }, [])
 
   return (
+
     <div style={{ padding: "40px" }}>
 
       <h1>Tasks</h1>
@@ -77,7 +112,7 @@ export default function TasksPage() {
 
       <select
         value={difficulty}
-        onChange={(e) => setDifficulty(e.target.value)}
+        onChange={(e) => setDifficulty(e.target.value as any)}
       >
         <option value="low">Low</option>
         <option value="medium">Medium</option>
@@ -94,7 +129,7 @@ export default function TasksPage() {
 
       <br /><br />
 
-      <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={addTask}>
+      <button onClick={addTask}>
         Add Task
       </button>
 
@@ -114,6 +149,19 @@ export default function TasksPage() {
         </div>
       ))}
 
+      <br />
+
+      <button onClick={generateScheduleHandler}>
+        Generate Schedule
+      </button>
+
+      <br /><br />
+
+      <button onClick={clearSchedule}>
+        Clear Schedule
+      </button>
+
     </div>
+
   )
 }

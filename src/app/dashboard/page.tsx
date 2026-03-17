@@ -1,22 +1,17 @@
-import { supabase } from "@/lib/supabase"
+"use client"
 
-const loadTasks = async () => {
+export default function DashboardPage() {
 
-    const { data: userData } = await supabase.auth.getUser()
+    return (
 
-    const user = userData.user
+        <div style={{ padding: "40px" }}>
 
-    if (!user) return
+            <h1>Dashboard</h1>
 
-    const { data } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("user_id", user.id)
+            <p>Welcome to Smart Scheduler</p>
 
-    setTasks(data || [])
+        </div>
 
-}
+    )
 
-function setTasks(arg0: any[]) {
-    throw new Error("Function not implemented.")
 }
